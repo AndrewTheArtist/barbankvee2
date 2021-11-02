@@ -5,6 +5,8 @@ const axios = require('axios');
 const jose = require('node-jose');
 const Transaction = require('./models/Transaction');
 const {JWS} = require("node-jose");
+const fetch = require('node-fetch')
+const response = require("node-jose");
 exports.verifyToken = async function (req, res, next) {
 
     // Check Authorization header existence
@@ -163,11 +165,29 @@ exports.processTransactions = async () => {
 }
 
 exports.sendRequestToBank = async (destinationBank, transactionAsJwt) => {
-    sendPostRequest(destinationBank, transactionUrl)
+    return await sendPostRequest(destinationBank.transactionUrl({jwt: transactionAsJwt}))
 }
 
+async function sendPostRequest(url, data) {
+    return await sendRequest('post', url, data)
 
+}
 
+async function sendRequest(method, url, data) {
+    let result
+    try {
+        console.log(`sendRequest(${url})`)
+        result = await fetch(url, {
+            method: method,
+            headers: {'Content-Type': 'application/json'}
+        })
+            .then(response => response.text())
+        return JSON.parse(result)
+    } catch (e) {
+        console.log(`sendRequest(${url})`,e)
+
+    }
+}
 
 // Updates transactions status and statusDetails fields
 async function setStatus(transaction, status, details) {
