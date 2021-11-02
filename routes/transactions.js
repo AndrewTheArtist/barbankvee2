@@ -153,7 +153,7 @@ router.post('/b2b', async function (req, res) {
     const accountFromBankPrefix = payload.accountFrom.substring(0, 3)
 
     // Find source bank (document)
-    const accountFromBank = await Bank.findOne({bankPrefix: accountFromBankPrefix})
+    let accountFromBank = await Bank.findOne({bankPrefix: accountFromBankPrefix})
 
     if (!accountFromBank) {
 
@@ -164,6 +164,12 @@ router.post('/b2b', async function (req, res) {
             // 500
             return res.status(500).send({error: "refreshBanksFromCentralBank: " + result.error}) //
         }
+        accountFromBank = await Bank.findOne({bankPrefix: accountFromBankPrefix})
+
+        if (!accountFromBank) {
+            return res.status(404).send({"error": "AccountFrom bank not found"})
+        }
+
     }
 
     // Validate signature

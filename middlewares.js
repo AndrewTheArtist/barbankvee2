@@ -72,7 +72,7 @@ exports.refreshBanksFromCentralBank = async () => {
         return true
     } catch (e) {
         // Return exception message on error
-        return {error: typeof e.response.data === 'undefined' ? JSON.stringify(e):JSON.stringify(e.response.data)};
+        return {error: typeof e.response.data === 'undefined' ? JSON.stringify(e) : JSON.stringify(e.response.data)};
     }
 }
 
@@ -161,6 +161,13 @@ exports.processTransactions = async () => {
 
 
 }
+
+exports.sendRequestToBank = async (destinationBank, transactionAsJwt) => {
+    sendPostRequest(destinationBank, transactionUrl)
+}
+
+
+
 
 // Updates transactions status and statusDetails fields
 async function setStatus(transaction, status, details) {
