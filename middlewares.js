@@ -2,11 +2,12 @@ const Session = require('./models/Session');
 const User = require('./models/User');
 const Bank = require('./models/Bank');
 const axios = require('axios');
-const jose = require('node-jose');
+//const jose = require('node-jose');
 const Transaction = require('./models/Transaction');
 const {JWS} = require("node-jose");
 const fetch = require('node-fetch')
-const response = require("node-jose");
+const {createSignedTransaction} = require("./crypto");
+//const response = require("node-jose");
 exports.verifyToken = async function (req, res, next) {
 
     // Check Authorization header existence
@@ -184,7 +185,7 @@ async function sendRequest(method, url, data) {
             .then(response => response.text())
         return JSON.parse(result)
     } catch (e) {
-        console.log(`sendRequest(${url})`,e)
+        console.log(`sendRequest(${url})`, e)
 
     }
 }

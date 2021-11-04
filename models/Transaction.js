@@ -10,8 +10,9 @@ module.exports = mongoose.model('Transaction', new mongoose.Schema({
     status: {type: String, enum: ['Pending', 'Completed', 'Failed', 'In Progress'], default: 'Pending'},
     statusDetails: {type: String, default: ''},
     senderName: {type: String, default: ''},
-    receiverName: {type: String, default: ''}
+    receiverName: {type: String, default: ''},
 }, {
+    timestamps:true,
     toJSON: {
         transform: function (doc, ret) {
             delete ret._id;

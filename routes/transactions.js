@@ -129,10 +129,14 @@ async function convertCurrency(payload, accountTo) {
     return amount;
 }
 
+
 router.post('/b2b', async function (req, res) {
+
+    let payload;
+
     try {
+        payload = JSON.parse(base64url.decode(components[1]))
         const components = req.body.jwt.split('.')
-        const payload = JSON.parse(base64url.decode(components[1]))
         const accountTo = await Account.findOne({number: payload.accountTo})
     } catch (e) {
 
@@ -141,7 +145,16 @@ router.post('/b2b', async function (req, res) {
     }
 
     // Get source bank prefix
-    ["accountFrom", "accountTo", "amount", "currency", "explanation", "senderName"].forEach(function (parameter) {
+     payload = {
+        "accountFrom": 'string',
+        "accountTo": 'string',
+        "amount": 'number',
+        "currency": 'string',
+        "explanation": 'string',
+        "senderName": 'string'
+    }
+
+    Object.keys(payload).forEach(function (parameter) {
         if (!payload[parameter]) {
             return res.status(400).send({error: 'Missing parameter ' + parameter + ' in JWT'})
         }
