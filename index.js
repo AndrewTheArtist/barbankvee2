@@ -4,6 +4,7 @@ const app = express()
 const swaggerUi = require('swagger-ui-express');
 const yaml = require('js-yaml');
 const fs   = require('fs');
+const axios = require('axios')
 const {processTransactions} = require("./middlewares");
 
 // Get document, or throw exception on error
@@ -25,6 +26,7 @@ try {
     app.use('/users', require('./routes/users'))
     app.use('/sessions', require('./routes/sessions'))
     app.use('/transactions', require('./routes/transactions'))
+    app.use('/banks', require('./routes/banks'))
 
 // Open connection to MongoDB
     mongoose.connect(process.env.MONGODB_URL, function (err) {

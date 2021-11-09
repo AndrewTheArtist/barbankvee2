@@ -3,6 +3,7 @@ const User = require('./models/User');
 const Bank = require('./models/Bank');
 const axios = require('axios');
 //const jose = require('node-jose');
+const fs = require('fs')
 const Transaction = require('./models/Transaction');
 const {JWS} = require("node-jose");
 const fetch = require('node-fetch')
@@ -99,7 +100,7 @@ exports.processTransactions = async () => {
 
         // Check if bank to was found and if not, refresh bank list and then attempt again and if still not found, set transaction status to failed and take the next transaction
         let result = exports.refreshBanksFromCentralBank();
-        if (!result || typeof result.error !== 'undefined') {
+        if (result && typeof result.error !== 'undefined') {
             return await setStatus(transaction, 'Failed', 'Central bank refresh failed: ' + result.error)
         }
 
@@ -116,7 +117,7 @@ exports.processTransactions = async () => {
             const result = await exports.refreshBanksFromCentralBank();
 
             // Check if there was an error refreshing the banks collection from central bank
-            if (!result || typeof result.error !== 'undefined') {
+            if (result && typeof result.error !== 'undefined') {
                 statusDetails = 'Contacting central bank failed: ' + result.error;
             } else {
 
@@ -142,8 +143,8 @@ exports.processTransactions = async () => {
             }));
 
             // Check for any errors with the request to foreign bank and log errors to statusDetails and take the next transaction
-            if (typeof response.error !== 'undefined') {
-                return await setStatus(transaction, 'Failed', response.error)
+            if (!response || response.error !== 'undefined') {
+                return await setStatus(transaction, 'Failed', JSON.stringify(response))
             }
 
             // Record receiverName from response to transaction object
@@ -151,48 +152,57 @@ exports.processTransactions = async () => {
 
             // Update transaction status to completed
             await setStatus(transaction, 'Completed', 'finished')
+
         } catch (e) {
+            console.log('Exception occurred while processing transaction')
             console.log(e)
 
-            return await setStatus(transaction, 'Pending', e.message)
+            return setStatus(transaction, 'Pending', e.message)
         }
 
     }, Error())
 
+    //console.log('Setting process transactions to run')
     // Call same function again after 1 sec
     setTimeout(exports.processTransactions, 1000)
 
 
 }
 
-exports.sendRequestToBank = async (destinationBank, transactionAsJwt) => {
-    return await sendPostRequest(destinationBank.transactionUrl({jwt: transactionAsJwt}))
+sendRequestToBank = async (destinationBank, transactionAsJwt) => {
+    return await sendPostRequest(destinationBank.transactionUrl, {jwt: transactionAsJwt})
 }
 
 async function sendPostRequest(url, data) {
-    return await sendRequest('post', url, data)
-
+    return await exports.sendRequest('post', url, data)
 }
 
-async function sendRequest(method, url, data) {
-    let result
-    try {
-        console.log(`sendRequest(${url})`)
-        result = await fetch(url, {
-            method: method,
-            headers: {'Content-Type': 'application/json'}
-        })
-            .then(response => response.text())
-        return JSON.parse(result)
-    } catch (e) {
-        console.log(`sendRequest(${url})`, e)
+exports.sendGetRequest = async function(url, data) {
+    return await exports.sendRequest('get', url, data)
+}
 
+exports.sendRequest = async function (method, url, data) {
+    let response
+    console.log('sendRequest '+'\n method ' +method+ '\n url '+ url+'\n data '+ JSON.stringify(data))
+    try {
+        response = await axios[method](url, data /*{timeout: 1000}*/).then((response) => {
+            console.log(response);
+        }, (error) => {
+            console.log(error);
+        });
+        return response
+    } catch (e) {
+        throw new Error(arguments.callee.name + '('+url+'): ' + e.message + (typeof e.response !== 'undefined' && typeof e.response.data !== 'undefined'? JSON.stringify(e.response.data) :''));
     }
 }
 
+
 // Updates transactions status and statusDetails fields
 async function setStatus(transaction, status, details) {
+    console.log('Setting ' + transaction._id + ' status from ' + transaction.status + ' to ' + status + '(' + details + ')')
+    transaction.oldStatus = transaction.status
     transaction.status = status
+    transaction.oldStatusDetails = transaction.statusDetails
     transaction.statusDetails = details
     await transaction.save()
 }

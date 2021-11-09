@@ -3,6 +3,8 @@ const router = require('express').Router();
 const Account = require('../models/Account');
 const Transaction = require('../models/Transaction');
 const Bank = require('../models/Bank');
+const User = require('../models/User');
+const fs = require('fs');
 const {verifyToken, refreshBanksFromCentralBank} = require("../middlewares");
 const {JWK, JWS} = require('node-jose')
 const {join} = require('path')
@@ -54,7 +56,7 @@ module.exports = router.post('/', verifyToken, async (req, res) => {
             const result = await refreshBanksFromCentralBank();
 
             // Check if there was an error refreshing the banks collection from central bank
-            if (!result || typeof result.error !== 'undefined') {
+            if (result && typeof result.error !== 'undefined') {
                 statusDetails = 'Contacting central bank failed: ' + result.error;
             } else {
 
@@ -67,12 +69,14 @@ module.exports = router.post('/', verifyToken, async (req, res) => {
                 }
             }
         }
+        const user = await User.findOne({_id: req.userId})
 
         // Create transaction into database.
         await new Transaction({
             accountFrom: req.body.accountFrom,
             accountTo: req.body.accountTo,
             amount: req.body.amount,
+            senderName: user.name,
             currency: accountFrom.currency,
             explanation: req.body.explanation,
             statusDetails: statusDetails
@@ -135,8 +139,9 @@ router.post('/b2b', async function (req, res) {
     let payload;
 
     try {
-        payload = JSON.parse(base64url.decode(components[1]))
         const components = req.body.jwt.split('.')
+        payload = JSON.parse(base64url.decode(components[1]))
+        console.log(req.body.jwt);
         const accountTo = await Account.findOne({number: payload.accountTo})
     } catch (e) {
 
@@ -145,7 +150,7 @@ router.post('/b2b', async function (req, res) {
     }
 
     // Get source bank prefix
-     payload = {
+    const parameters = {
         "accountFrom": 'string',
         "accountTo": 'string',
         "amount": 'number',
@@ -154,12 +159,13 @@ router.post('/b2b', async function (req, res) {
         "senderName": 'string'
     }
 
-    Object.keys(payload).forEach(function (parameter) {
-        if (!payload[parameter]) {
+
+    Object.keys(parameters).forEach(function (parameter) {
+        if (!parameters[parameter]) {
             return res.status(400).send({error: 'Missing parameter ' + parameter + ' in JWT'})
         }
-        if (typeof payload[parameter] !== 'string') {
-            return res.status(400).send({error: parameter + ' is of type ' + typeof payload[parameter] + ' but expected it to be type string in JWT'})
+        if (typeof parameters[parameter] !== 'string') {
+            return res.status(400).send({error: parameter + ' is of type ' + typeof parameters[parameter] + ' but expected it to be type string in JWT'})
         }
     })
 
@@ -172,11 +178,12 @@ router.post('/b2b', async function (req, res) {
 
         // Refresh the local list of banks with the list of banks from the central bank - kinda long but eh
         const result = await refreshBanksFromCentralBank();
-        if (typeof result.error !== 'undefined') {
+        if (result && typeof result.error !== 'undefined') {
 
             // 500
             return res.status(500).send({error: "refreshBanksFromCentralBank: " + result.error}) //
         }
+
         accountFromBank = await Bank.findOne({bankPrefix: accountFromBankPrefix})
 
         if (!accountFromBank) {

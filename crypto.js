@@ -43,6 +43,7 @@ exports.getSigningKey = async function () {
 exports.createSignedTransaction = async function (input) {
 
     try {
+        console.log(await exports.getToken(input, await exports.getSigningKey()))
         return await exports.getToken(input, await exports.getSigningKey())
     } catch (err) {
         console.error('Error reading private key' + err)
@@ -51,11 +52,15 @@ exports.createSignedTransaction = async function (input) {
 }
 
 exports.verifySignature = async function (jwtString, publicKey) {
+    console.log(jwtString);
+    console.log(publicKey);
     return !!jwt.verify(jwtString, publicKey)
 }
 
 exports.getPublicKey = async function (jwksUrl) {
-    const jwks = await sendGetRequest(jwksUrl)
-    const signingKey = await exports.getSigningKey();
-    return jwkToPem(signingKey.toJSON())
+    const jwks = await  sendGetRequest(jwksUrl)
+    //const signingKey = await exports.getSigningKey();
+    console.log('hey' + JSON.parse(jwks).keys[0] + 'you');
+
+    return jwkToPem(JSON.parse(jwks).keys[0])
 }

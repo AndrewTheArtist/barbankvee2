@@ -8,6 +8,8 @@ module.exports = mongoose.model('Transaction', new mongoose.Schema({
     currency: {type: String, required: true},
     explanation: {type: String, required: true},
     status: {type: String, enum: ['Pending', 'Completed', 'Failed', 'In Progress'], default: 'Pending'},
+    oldStatus: {type: String, enum: ['Pending', 'Completed', 'Failed', 'In Progress'], default: 'Pending'},
+    oldStatusDetails: {type: String, default:''},
     statusDetails: {type: String, default: ''},
     senderName: {type: String, default: ''},
     receiverName: {type: String, default: ''},
