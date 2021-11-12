@@ -58,8 +58,8 @@ exports.verifySignature = async function (jwtString, publicKey) {
 }
 
 exports.getPublicKey = async function (jwksUrl) {
-    const jwks = await  sendGetRequest(jwksUrl)
-    //const signingKey = await exports.getSigningKey();
+    console.log(jwksUrl);
+    const jwks =  await sendGetRequest(jwksUrl)
     console.log('hey' + JSON.parse(jwks).keys[0] + 'you');
 
     return jwkToPem(JSON.parse(jwks).keys[0])

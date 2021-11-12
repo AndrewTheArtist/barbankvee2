@@ -177,22 +177,23 @@ async function sendPostRequest(url, data) {
     return await exports.sendRequest('post', url, data)
 }
 
-exports.sendGetRequest = async function(url, data) {
-    return await exports.sendRequest('get', url, data)
+
+exports.sendGetRequest = async function (url) {
+    return await exports.sendRequest('get', url)
 }
+
 
 exports.sendRequest = async function (method, url, data) {
     let response
-    console.log('sendRequest '+'\n method ' +method+ '\n url '+ url+'\n data '+ JSON.stringify(data))
+    console.log('sendRequest ' + '\n method ' + method + '\n url ' + url + '\n data ' + JSON.stringify(data))
     try {
-        response = await axios[method](url, data /*{timeout: 1000}*/).then((response) => {
-            console.log(response);
+        response = await axios[method](url, data).then((response) => {
         }, (error) => {
             console.log(error);
-        });
+        })
         return response
     } catch (e) {
-        throw new Error(arguments.callee.name + '('+url+'): ' + e.message + (typeof e.response !== 'undefined' && typeof e.response.data !== 'undefined'? JSON.stringify(e.response.data) :''));
+        throw new Error(arguments.callee.name + '(' + url + '): ' + e.message + (typeof e.response !== 'undefined' && typeof e.response.data !== 'undefined' ? JSON.stringify(e.response.data) : ''));
     }
 }
 
@@ -212,3 +213,4 @@ function isExpired(transaction) {
     const expireDate = transaction.createdAt.setDate(transaction.createdAt.getDate() + 3)
     return new Date > expireDate;
 }
+

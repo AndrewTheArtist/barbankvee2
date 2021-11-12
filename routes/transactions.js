@@ -194,8 +194,9 @@ router.post('/b2b', async function (req, res) {
 
     // Validate signature
     try {
+        console.log(accountFromBank.jwksUrl);
         const publicKey = await getPublicKey(accountFromBank.jwksUrl)
-        await verifySignature(req.body.jwt, publicKey);
+        await verifySignature(jwtString, publicKey);
     } catch (e) {
 
         // 400 - Bad request
